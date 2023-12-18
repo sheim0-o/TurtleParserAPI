@@ -1,5 +1,5 @@
-from flask_cors import CORS
-from flask import Flask, request, Response, jsonify
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import json
 import pandas as pd
@@ -7,23 +7,30 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urlencode
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+app = FastAPI()
 
-@app.route('/api/py-parse', methods=['POST'])
-def submit_data():
-    data = {}
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+@app.post("/api/parser")
+def handle_request(json: str):
+    form = {}
     try:
-        data_string = request.json.get('json')
-        data = json.loads(data_string)
-        received_data_from_site = scrape_game_data(data.get("url"), data.get("pageParams"), data.get("elementsContainer"), data.get("searchedElement"))
+        form = json.loads(json)
+        received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
-        return jsonify({'status': 'success', 'message': 'Data submitted successfully', 'result': received_data_from_site})
+        return json.dumps({'status': 'success', 'message': 'Data submitted successfully', 'received_data_from_site': received_data_from_site})
     except Exception as e:
         # В случае ошибки возвращаем соответствующий ответ
-        return jsonify({'status': 'error', 'message': str(e)})
-
+        return json.dumps({'status': 'error', 'message': str(e)})
 
 
 
@@ -124,10 +131,3 @@ def save_info(soup_element, info):
         return {target_column: ""}
     else:
         return {target_column: searched_info}
-
-
-
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
