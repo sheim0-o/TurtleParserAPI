@@ -6,6 +6,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urlencode
+import os
+API_KEY = os.environ.get('API_KEY')
 
 app = FastAPI()
 
@@ -18,19 +20,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+headers = {'Content-Type': 'application/json'}
 
 @app.post("/api/parser")
-def handle_request(json: str):
+def handle_request(json: str, api_key=str):
+    if api_key != API_KEY:
+        return json.dumps({'status': 'error', 'message': "You do not have access to this method!"}), 403, headers
     form = {}
     try:
         form = json.loads(json)
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
-        return json.dumps({'status': 'success', 'message': 'Data submitted successfully', 'received_data_from_site': received_data_from_site})
+        return json.dumps({'status': 'success', 'message': 'Data submitted successfully', 'received_data_from_site': received_data_from_site}), 200, headers
     except Exception as e:
         # В случае ошибки возвращаем соответствующий ответ
-        return json.dumps({'status': 'error', 'message': str(e)})
+        return json.dumps({'status': 'error', 'message': str(e)}), 400, headers
 
 
 
