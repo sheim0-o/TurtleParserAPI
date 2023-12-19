@@ -93,7 +93,7 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
             if len(result_of_parsing_page.errors) > 0:
                 result.errors.append(result_of_parsing_page.errors)
     else:
-        result_of_parsing_page = get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
+        result_of_parsing_page = get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
         if result_of_parsing_page.status == "success":
             result.columns.append(result_of_parsing_page.result_array)
         elif result_of_parsing_page.status == "error":
