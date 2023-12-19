@@ -115,7 +115,7 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     soup_container = get_elements_container(soup, elements_container["nameOfType"])
     if soup_container is None:
-        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container["nameOfType"]' is None"}]}
+        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container["nameOfType"]}' is None"}]}
     soup_searched_element = get_serched_element_in_container(soup_container, searched_element["nameOfType"])
     if soup_searched_element is None:
         return {"status":"error", result_array:[{"url":url, "error": f"soup_searched_element '{searched_element["nameOfType"]}' is None"}]}
