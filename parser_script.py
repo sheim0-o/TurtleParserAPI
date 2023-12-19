@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
@@ -33,7 +33,7 @@ def handle_request(requestedData: RequestedData):
     requested_json = requestedData.json
     
     if api_key != API_KEY:
-        return json.dumps({'status': 'error', 'message': "You do not have access to this method!"}), 403, headers
+        raise HTTPException(status_code=403, detail="You don't have access to this method!")
         
     form = {}
     try:
@@ -41,10 +41,9 @@ def handle_request(requestedData: RequestedData):
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
-        return json.dumps({'status': 'success', 'message': 'Data submitted successfully', 'received_data_from_site': received_data_from_site}), 200, headers
+        return json.dumps(received_data_from_site)
     except Exception as e:
-        # В случае ошибки возвращаем соответствующий ответ
-        return json.dumps({'status': 'error', 'message': str(e)}), 400, headers
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 
