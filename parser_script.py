@@ -150,14 +150,16 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
 def process_element(soup_searched_element, searched_element):
     result = {}
-    print(searched_element)
 
     for searched_info in searched_element["searchedInfo"]:
         result.update(save_info(soup_searched_element, searched_info))
 
     for el in searched_element["searchedElements"]:
         get_child_serched_element = search_type_mapping.get(el["typeOfSearchElement"])
+        print(el["typeOfSearchElement"])
         soup_el = get_child_serched_element(soup_searched_element, el["nameOfType"])
+        print(soup_el)
+        
         if soup_el is None:
             continue
         received_data = process_element(soup_el, el)
