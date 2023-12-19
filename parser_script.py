@@ -140,7 +140,8 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
-        columns.append(pd.Series(result))
+        if len(result) != 0:
+            columns.append(pd.Series(result))
 
     if not columns:
         return {"status": "error", "result_array": [{"url": url, "error": "No data found!"}]}
