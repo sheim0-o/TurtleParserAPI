@@ -74,7 +74,7 @@ def modify_url(original_url, parameter_name, parameter_new_value):
 
 
 def scrape_game_data(url, page_params, elements_container, searched_element):
-    result = {"status":"", columns:[], errors:[]}
+    result = {"status":"", "columns":[], "errors":[]}
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
     get_serched_element_in_container = search_type_mapping.get(searched_element["typeOfSearchElement"]+"All")
 
@@ -119,15 +119,15 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     soup_container = get_elements_container(soup, elements_container_type_name)
     if soup_container is None:
-        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container_type_name}' is None"}]}
+        return {"status":"error", "result_array":[{"url":url, "error": f"container '{elements_container_type_name}' is None"}]}
     soup_searched_element = get_serched_element_in_container(soup_container, searched_element_type_name)
     if soup_searched_element is None:
-        return {"status":"error", result_array:[{"url":url, "error": f"soup_searched_element '{searched_element_type_name}' is None"}]}
+        return {"status":"error", "result_array":[{"url":url, "error": f"soup_searched_element '{searched_element_type_name}' is None"}]}
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
         columns.append(result)
-    return {"status":"success", result_array:columns}
+    return {"status":"success", "result_array":columns}
 
 
 def process_element(soup_searched_element, searched_element):
