@@ -43,26 +43,13 @@ def handle_request(requestedData: RequestedData):
         form = json.loads(requested_json)
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
         if result_data["status"] == "success":
-            pdTable = pd.DataFrame(result_data["columns"])
-            temp_csv_filename = 'temp_csv_file.csv'
-            pdTable.to_csv(temp_csv_filename, index=False)
-        
-            with open(temp_csv_filename, 'r', encoding='utf-8') as file:
-                csv_content = file.read()
-        
-            os.remove(temp_csv_filename)
-        
-            compressed_csv_content = gzip.compress(csv_content.encode('utf-8'))
-        
+            df = pd.DataFrame(result_data["columns"])
+            csv_data = df.to_csv(index=False)        
             headers = {
-                'Access-Control-Allow-Origin': 'https://turtle-parser.web.app',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Content-Disposition': 'attachment; filename=result.csv.gz', 
-                'Content-Encoding': 'gzip',
-                'Cache-Control': 'no-store',
+                "Content-Disposition": 'attachment; filename=table.csv',
+                "Content-Type": "text/csv",
             }
-            return Response(content=compressed_csv_content, media_type="text/csv", headers=headers)
+            return Response(content=csv_data, media_type="text/csv", headers=headers)
         elif result_data["status"] == "error":
             raise HTTPException(status_code=400, detail={"form":form, "result_data":result_data, "errors": result_data["errors"] })
         else:
@@ -135,7 +122,6 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
         result["status"] = "no data"
     return result
 
-
 def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_searched_element_in_container):
     columns = []
 
@@ -154,12 +140,17 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
-        columns.append(pd.Series(result))  # Convert the result dictionary to a Pandas Series
+        columns.append(pd.Series(result))
+
+    if not columns:
+        return {"status": "error", "result_array": [{"url": url, "error": "No data found!"}]}
+
     return {"status": "success", "result_array": columns}
 
 
 def process_element(soup_searched_element, searched_element):
     result = {}
+    print(searched_element)
 
     for searched_info in searched_element["searchedInfo"]:
         result.update(save_info(soup_searched_element, searched_info))
