@@ -39,7 +39,7 @@ def handle_request(requestedData: RequestedData):
     received_data_from_site = {}
     try:
         form = json.loads(requested_json)
-        received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
+        received_data_from_site = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
 
         # Возвращаем успешный ответ
         return {"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site}
@@ -78,33 +78,33 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
     get_serched_element_in_container = search_type_mapping.get(searched_element["typeOfSearchElement"]+"All")
 
-    if page_params.get("isMultiplePages"):
-        name_of_page_param = page_params.get("nameOfPageParam")
-        first_page = page_params.get("firstPage")
-        step = page_params.get("step")
-        last_page = page_params.get("lastPage")
+    if page_params["isMultiplePages"]:
+        name_of_page_param = page_params["nameOfPageParam"]
+        first_page = page_params["firstPage"]
+        step = page_params["step"]
+        last_page = page_params["lastPage"]
 
 
         for page in range(first_page, last_page + 1, step):
             current_url = modify_url(url, name_of_page_param, page)
             result_of_parsing_page = get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
-            if len(result_of_parsing_page.columns) > 0:
-                result.columns.append(result_of_parsing_page.columns)
-            if len(result_of_parsing_page.errors) > 0:
-                result.errors.append(result_of_parsing_page.errors)
+            if len(result_of_parsing_page["columns"]) > 0:
+                result["columns"].append(result_of_parsing_page["columns"])
+            if len(result_of_parsing_page["errors"]) > 0:
+                result["errors"].append(result_of_parsing_page["errors"])
     else:
         result_of_parsing_page = get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
-        if result_of_parsing_page.status == "success":
-            result.columns.append(result_of_parsing_page.result_array)
-        elif result_of_parsing_page.status == "error":
-            result.errors.append(result_of_parsing_page.result_array)
+        if result_of_parsing_page["status"] == "success":
+            result["columns"].append(result_of_parsing_page["result_array"])
+        elif result_of_parsing_page["status"] == "error":
+            result["errors"].append(result_of_parsing_page["result_array"])
     
-    if len(result.columns) > 0:
-        result.status = "success"
-    elif len(result.errors) > 0:
-        result.status = "error"
+    if len(result["columns"]) > 0:
+        result["status"] = "success"
+    elif len(result["errors"]) > 0:
+        result["status"] = "error"
     else:
-        result.status = "no data"
+        result["status"] = "no data"
     return result
 
 
@@ -149,9 +149,9 @@ def process_element(soup_searched_element, searched_element):
 
 
 def save_info(soup_element, info):
-    target_column = info.get("targetColumn")
-    type_of_info = info.get("typeOfSearchedInfoPlace")
-    attribute_name = info.get("attributeName")
+    target_column = info["targetColumn"]
+    type_of_info = info["typeOfSearchedInfoPlace"]
+    attribute_name = info["attributeName"]
 
     get_info_from_element = info_type_mapping.get(type_of_info)
     searched_info = get_info_from_element(soup_element, attribute_name)
