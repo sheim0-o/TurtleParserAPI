@@ -99,9 +99,9 @@ def modify_url(original_url, parameter_name, parameter_new_value):
 
 
 def scrape_game_data(url, page_params, elements_container, searched_element):
-    result = {"status":"", "columns":[], "errors":[]}
+    result = {"status": "", "columns": [], "errors": []}
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
-    get_serched_element_in_container = search_type_mapping.get(searched_element["typeOfSearchElement"]+"All")
+    get_searched_element_in_container = search_type_mapping.get(searched_element["typeOfSearchElement"] + "All")
 
     if page_params["isMultiplePages"]:
         name_of_page_param = page_params["nameOfPageParam"]
@@ -109,21 +109,24 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
         step = page_params["step"]
         last_page = page_params["lastPage"]
 
-
         for page in range(first_page, last_page + 1, step):
             current_url = modify_url(url, name_of_page_param, page)
-            result_of_parsing_page = get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
+            result_of_parsing_page = get_page_from_url(
+                current_url, elements_container, searched_element, get_elements_container, get_searched_element_in_container
+            )
             if len(result_of_parsing_page["columns"]) > 0:
-                result["columns"].append(result_of_parsing_page["columns"])
+                result["columns"].extend(result_of_parsing_page["columns"])
             if len(result_of_parsing_page["errors"]) > 0:
-                result["errors"].append(result_of_parsing_page["errors"])
+                result["errors"].extend(result_of_parsing_page["errors"])
     else:
-        result_of_parsing_page = get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
+        result_of_parsing_page = get_page_from_url(
+            url, elements_container, searched_element, get_elements_container, get_searched_element_in_container
+        )
         if result_of_parsing_page["status"] == "success":
-            result["columns"].append(result_of_parsing_page["result_array"])
+            result["columns"].extend(result_of_parsing_page["result_array"])
         elif result_of_parsing_page["status"] == "error":
-            result["errors"].append(result_of_parsing_page["result_array"])
-    
+            result["errors"].extend(result_of_parsing_page["result_array"])
+
     if len(result["columns"]) > 0:
         result["status"] = "success"
     elif len(result["errors"]) > 0:
@@ -133,26 +136,26 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
     return result
 
 
-def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container):
+def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_searched_element_in_container):
     columns = []
 
     elements_container_type_name = elements_container["nameOfType"]
     searched_element_type_name = searched_element["nameOfType"]
-    
+
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, "html.parser")
 
     soup_container = get_elements_container(soup, elements_container_type_name)
     if soup_container is None:
-        return {"status":"error", "result_array":{"url":url, "error": f"Container with type '{elements_container_type_name}' wasn't found!"}}
-    soup_searched_element = get_serched_element_in_container(soup_container, searched_element_type_name)
+        return {"status": "error", "result_array": [{"url": url, "error": f"Container with type '{elements_container_type_name}' wasn't found!"}]}
+    soup_searched_element = get_searched_element_in_container(soup_container, searched_element_type_name)
     if soup_searched_element is None:
-        return {"status":"error", "result_array":{"url":url, "error": f"Searched element with type '{searched_element_type_name}' wasn't found!"}}
+        return {"status": "error", "result_array": [{"url": url, "error": f"Searched element with type '{searched_element_type_name}' wasn't found!"}]}
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
-        columns.append(result)
-    return {"status":"success", "result_array":columns}
+        columns.append(pd.Series(result))  # Convert the result dictionary to a Pandas Series
+    return {"status": "success", "result_array": columns}
 
 
 def process_element(soup_searched_element, searched_element):
