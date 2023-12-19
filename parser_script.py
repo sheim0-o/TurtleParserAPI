@@ -52,7 +52,7 @@ def handle_request(requestedData: RequestedData):
                 'Cache-Control': 'no-store',
                 "Content-Type": "text/csv",
             }            
-            return StreamingResponse(iter([io.BytesIO(csv_data.encode())]), headers=headers)
+            return PlainTextResponse(content=csv_data, headers=headers)
         elif result_data["status"] == "error":
             raise HTTPException(status_code=400, detail={"form":form, "result_data":result_data, "errors": result_data["errors"] })
         else:
