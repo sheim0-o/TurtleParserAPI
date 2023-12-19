@@ -42,9 +42,9 @@ def handle_request(requestedData: RequestedData):
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
-        return json.dumps({"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site})
+        return {"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=json.dumps({"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site, "detail":str(e)}))
+        raise HTTPException(status_code=400, detail={"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site, "detail":str(e)})
 
 
 
@@ -74,7 +74,7 @@ def modify_url(original_url, parameter_name, parameter_new_value):
 
 
 def scrape_game_data(url, page_params, elements_container, searched_element):
-    columns = []
+    result = {"status":"", columns:[], errors:[]}
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
     get_serched_element_in_container = search_type_mapping.get(searched_element["typeOfSearchElement"]+"All")
 
@@ -87,11 +87,25 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
 
         for page in range(first_page, last_page + 1, step):
             current_url = modify_url(url, name_of_page_param, page)
-            columns.append(get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container))
+            result_of_parsing_page = get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
+            if len(result_of_parsing_page.columns) > 0:
+                result.columns.append(result_of_parsing_page.columns)
+            if len(result_of_parsing_page.errors) > 0:
+                result.errors.append(result_of_parsing_page.errors)
     else:
-        columns.append(get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container))
-
-    return columns
+        result_of_parsing_page = get_page_from_url(current_url, elements_container, searched_element, get_elements_container, get_serched_element_in_container)
+        if result_of_parsing_page.status == "success":
+            result.columns.append(result_of_parsing_page.result_array)
+        elif result_of_parsing_page.status == "error":
+            result.errors.append(result_of_parsing_page.result_array)
+    
+    if len(result.columns) > 0:
+        result.status = "success"
+    elif len(result.errors) > 0:
+        result.status = "error"
+    else:
+        result.status = "no data"
+    return result
 
 
 def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container):
@@ -101,15 +115,15 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     soup_container = get_elements_container(soup, elements_container["nameOfType"])
     if soup_container is None:
-        return []
+        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container["nameOfType"]' is None"}]}
     soup_searched_element = get_serched_element_in_container(soup_container, searched_element["nameOfType"])
     if soup_searched_element is None:
-        return []
+        return {"status":"error", result_array:[{"url":url, "error": f"soup_searched_element '{searched_element["nameOfType"]}' is None"}]}
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
         columns.append(result)
-    return columns
+    return {"status":"success", result_array:columns}
 
 
 def process_element(soup_searched_element, searched_element):
