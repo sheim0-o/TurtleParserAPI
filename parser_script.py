@@ -36,6 +36,7 @@ def handle_request(requestedData: RequestedData):
         raise HTTPException(status_code=403, detail="You don't have access to this method!")
         
     form = {}
+    received_data_from_site = {}
     try:
         form = json.loads(requested_json)
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
@@ -43,7 +44,7 @@ def handle_request(requestedData: RequestedData):
         # Возвращаем успешный ответ
         return json.dumps({"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site})
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=json.dumps({"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site, "detail":str(e)}))
 
 
 
