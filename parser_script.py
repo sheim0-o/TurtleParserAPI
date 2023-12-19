@@ -30,13 +30,14 @@ class RequestedData(BaseModel):
 @app.post("/api/parser")
 def handle_request(requestedData: RequestedData):
     api_key = requestedData.api_key
-    json = requestedData.json
+    requested_json = requestedData.json
     
     if api_key != API_KEY:
         return json.dumps({'status': 'error', 'message': "You do not have access to this method!"}), 403, headers
+        
     form = {}
     try:
-        form = json.loads(json)
+        form = json.loads(requested_json)
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
