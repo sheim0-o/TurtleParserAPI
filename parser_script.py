@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from http import HTTPStatus
 from pydantic import BaseModel
 import json
 import pandas as pd
@@ -36,15 +37,21 @@ def handle_request(requestedData: RequestedData):
         raise HTTPException(status_code=403, detail="You don't have access to this method!")
         
     form = {}
-    received_data_from_site = {}
+    result_data = {}
     try:
         form = json.loads(requested_json)
-        received_data_from_site = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
-
-        # Возвращаем успешный ответ
-        return {"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site}
+        result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
+        if result_data["status"] == "success":
+            df = pd.DataFrame(result_data["columns"])
+            csv_table = df.to_csv(index=False)
+            return {"csv_table": csv_table}
+        elif result_data["status"] == "error":
+            raise HTTPException(status_code=400, detail={"form":form, "result_data":result_data, "errors": result_data["errors"] })
+        else:
+            raise HTTPException(status_code=404, detail={"form":form, "result_data":result_data, "error": "Data wasn't received"})
     except Exception as e:
-        raise HTTPException(status_code=400, detail={"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site, "detail":str(e)})
+        error_status_code = getattr(HTTPStatus, str(e), 400)
+        raise HTTPException(status_code=error_status_code, detail={"form":form, "result_data":result_data, "error":str(e)})
 
 
 
