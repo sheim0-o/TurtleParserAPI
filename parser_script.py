@@ -110,15 +110,19 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
 
 def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_serched_element_in_container):
     columns = []
+
+    elements_container_type_name = elements_container["nameOfType"]
+    searched_element_type_name = searched_element["nameOfType"]
+    
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    soup_container = get_elements_container(soup, elements_container["nameOfType"])
+    soup_container = get_elements_container(soup, elements_container_type_name)
     if soup_container is None:
-        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container["nameOfType"]}' is None"}]}
-    soup_searched_element = get_serched_element_in_container(soup_container, searched_element["nameOfType"])
+        return {"status":"error", result_array:[{"url":url, "error": f"container '{elements_container_type_name}' is None"}]}
+    soup_searched_element = get_serched_element_in_container(soup_container, searched_element_type_name)
     if soup_searched_element is None:
-        return {"status":"error", result_array:[{"url":url, "error": f"soup_searched_element '{searched_element["nameOfType"]}' is None"}]}
+        return {"status":"error", result_array:[{"url":url, "error": f"soup_searched_element '{searched_element_type_name}' is None"}]}
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
