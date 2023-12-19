@@ -41,7 +41,7 @@ def handle_request(requestedData: RequestedData):
         received_data_from_site = scrape_game_data(form.get("url"), form.get("pageParams"), form.get("elementsContainer"), form.get("searchedElement"))
 
         # Возвращаем успешный ответ
-        return json.dumps(received_data_from_site)
+        return json.dumps({"requested_json":requested_json, "form":form, "received_data_from_site":received_data_from_site})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
