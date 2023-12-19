@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from http import HTTPStatus
 from pydantic import BaseModel
@@ -22,7 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-headers = {'Content-Type': 'application/json'}
 
 class RequestedData(BaseModel):
     json: str
@@ -42,9 +42,13 @@ def handle_request(requestedData: RequestedData):
         form = json.loads(requested_json)
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
         if result_data["status"] == "success":
-            df = pd.DataFrame(result_data["columns"])
-            csv_table = df.to_csv(index=False)
-            return {"csv_table": csv_table}
+            df = pd.DataFrame(received_data_from_site)
+            csv_data = df.to_csv(index=False)
+            headers = {
+                "Content-Disposition": f'attachment; filename=table.csv',
+                "Content-Type": "text/csv",
+            }
+            return StreamingResponse(iter([csv_data]), headers=headers)
         elif result_data["status"] == "error":
             raise HTTPException(status_code=400, detail={"form":form, "result_data":result_data, "errors": result_data["errors"] })
         else:
@@ -126,10 +130,10 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     soup_container = get_elements_container(soup, elements_container_type_name)
     if soup_container is None:
-        return {"status":"error", "result_array":[{"url":url, "error": f"container '{elements_container_type_name}' is None"}]}
+        return {"status":"error", "result_array":{"url":url, "error": f"Container with type '{elements_container_type_name}' wasn't found!"}}
     soup_searched_element = get_serched_element_in_container(soup_container, searched_element_type_name)
     if soup_searched_element is None:
-        return {"status":"error", "result_array":[{"url":url, "error": f"soup_searched_element '{searched_element_type_name}' is None"}]}
+        return {"status":"error", "result_array":{"url":url, "error": f"Searched element with type '{searched_element_type_name}' wasn't found!"}}
 
     for soup_element in soup_searched_element:
         result = process_element(soup_element, searched_element)
