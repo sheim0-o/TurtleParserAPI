@@ -43,21 +43,16 @@ def handle_request(requestedData: RequestedData):
         form = json.loads(requested_json)
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
         if result_data["status"] == "success":
-            pdTable = pd.DataFrame(result_data["columns"])
-            temp_csv_filename = 'temp_csv_file.csv'
-            pdTable.to_csv(temp_csv_filename, index=False)
-        
-            with open(temp_csv_filename, 'r', encoding='utf-8') as file:
-                csv_content = file.read()
-            os.remove(temp_csv_filename)
-            compressed_csv_content = gzip.compress(csv_content.encode('utf-8'))
+            df = pd.DataFrame(result_data["columns"])
+            csv_data = df.to_csv(index=False)
             
             headers = {
                 'Content-Disposition': 'attachment; filename=result.csv.gz', 
                 'Content-Encoding': 'gzip',
                 'Cache-Control': 'no-store',
+                "Content-Type": "text/csv",
             }            
-            return StreamingResponse(iter([compressed_csv_content]), headers=headers)
+            return StreamingResponse(iter([io.BytesIO(csv_data.encode())]), headers=headers)
         elif result_data["status"] == "error":
             raise HTTPException(status_code=400, detail={"form":form, "result_data":result_data, "errors": result_data["errors"] })
         else:
