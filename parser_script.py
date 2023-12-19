@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from pydantic import BaseModel
 import json
 import pandas as pd
 import requests
@@ -22,8 +23,15 @@ app.add_middleware(
 )
 headers = {'Content-Type': 'application/json'}
 
+class RequestedData(BaseModel):
+    json: str
+    api_key: str
+
 @app.post("/api/parser")
-def handle_request(json: str, api_key=str):
+def handle_request(requestedData: RequestedData):
+    api_key = requestedData.api_key
+    json = requestedData.json
+    
     if api_key != API_KEY:
         return json.dumps({'status': 'error', 'message': "You do not have access to this method!"}), 403, headers
     form = {}
