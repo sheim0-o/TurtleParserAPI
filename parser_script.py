@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import json
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from urllib.parse import urlparse, parse_qs, urlencode
 import os
 API_KEY = os.environ.get('API_KEY')
