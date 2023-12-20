@@ -41,6 +41,7 @@ def handle_request(requestedData: RequestedData):
     result_data = {}
     try:
         form = json.loads(requested_json)
+        print(form)
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
         if result_data["status"] == "success":
             df = pd.DataFrame(result_data["columns"])
@@ -76,6 +77,7 @@ info_type_mapping = {
     "FromAttribute": lambda element, attr: element.get(attr, ""),
 }
 
+# Изменение параметра в url
 def modify_url(original_url, parameter_name, parameter_new_value):
     parsed_url = urlparse(original_url)
     query_params = parse_qs(parsed_url.query)
@@ -84,6 +86,7 @@ def modify_url(original_url, parameter_name, parameter_new_value):
     updated_url = parsed_url._replace(query=updated_query).geturl()
     return updated_url
 
+# Получение искомой информации с сайта
 def scrape_game_data(url, page_params, elements_container, searched_element):
     result = {"status": "", "columns": [], "errors": []}
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
@@ -121,6 +124,7 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
         result["status"] = "no data"
     return result
 
+# Получение искомой информации с определенной страницы сайта
 def get_page_from_url(url, elements_container, searched_element, get_elements_container, get_searched_element_in_container):
     columns = []
 
@@ -147,7 +151,7 @@ def get_page_from_url(url, elements_container, searched_element, get_elements_co
 
     return {"status": "success", "result_array": columns}
 
-
+# Получение искомой информации с определенного элемента
 def process_element(soup_searched_element, searched_element):
     result = {}
 
@@ -156,9 +160,7 @@ def process_element(soup_searched_element, searched_element):
 
     for el in searched_element["searchedElements"]:
         get_child_serched_element = search_type_mapping.get(el["typeOfSearchElement"])
-        print(el["typeOfSearchElement"])
         soup_el = get_child_serched_element(soup_searched_element, el["nameOfType"])
-        print(soup_el)
         
         if soup_el is None:
             continue
@@ -168,7 +170,7 @@ def process_element(soup_searched_element, searched_element):
 
     return result
 
-
+# Получение и сохранение искомой информации
 def save_info(soup_element, info):
     target_column = info["targetColumn"]
     type_of_info = info["typeOfSearchedInfoPlace"]
