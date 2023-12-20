@@ -43,9 +43,11 @@ def handle_request(requestedData: RequestedData):
         form = json.loads(requested_json)
         print(form)
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
+        print(result_data)
         if result_data["status"] == "success":
             df = pd.DataFrame(result_data["columns"])
-            csv_data = df.to_csv(index=False, encoding="utf-8")        
+            csv_data = df.to_csv(index=False, encoding="utf-8")   
+            print(csv_data)     
             headers = {
                 "Content-Disposition": 'attachment; filename=table.csv',
                 "Content-Type": "text/csv; charset=utf-8",
