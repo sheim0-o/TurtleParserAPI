@@ -82,9 +82,9 @@ def recursive_get_inner_text(element):
     text = ''
     for child in element.children:
         if child.name and child.name.lower() == 'p':
-            text += recursive_text(child) + ' '
+            text += recursive_get_inner_text(child) + ' '
         elif child.name:
-            text += recursive_text(child)
+            text += recursive_get_inner_text(child)
         elif isinstance(child, str):
             text += child.strip() + ' '
     return text.strip()
