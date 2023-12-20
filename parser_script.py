@@ -73,18 +73,20 @@ search_type_mapping = {
 
 # Словарь типов информации
 info_type_mapping = {
-    "InnerText": lambda element, attr: ' '.join(recursive_get_text(child) for child in element.children if isinstance(child, NavigableString) or child.get_text(strip=True)),
+    "InnerText": lambda element, attr: recursive_get_inner_text(element),
     "FromAttribute": lambda element, attr: element.get(attr, ""),
 }
 
 # Рекурсивная функция для получения текста из всех дочерних элементов
-def recursive_get_text(element):
+def recursive_get_inner_text(element):
     text = ''
     for child in element.children:
-        if isinstance(child, NavigableString):
-            text += str(child).strip() + ' '
+        if child.name and child.name.lower() == 'p':
+            text += recursive_text(child) + ' '
         elif child.name:
-            text += recursive_get_text(child)
+            text += recursive_text(child)
+        elif isinstance(child, str):
+            text += child.strip() + ' '
     return text.strip()
 
 # Изменение параметра в url
