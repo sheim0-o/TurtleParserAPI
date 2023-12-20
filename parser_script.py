@@ -84,7 +84,6 @@ def modify_url(original_url, parameter_name, parameter_new_value):
     updated_url = parsed_url._replace(query=updated_query).geturl()
     return updated_url
 
-
 def scrape_game_data(url, page_params, elements_container, searched_element):
     result = {"status": "", "columns": [], "errors": []}
     get_elements_container = search_type_mapping.get(elements_container["typeOfSearchElement"])
@@ -97,14 +96,14 @@ def scrape_game_data(url, page_params, elements_container, searched_element):
         last_page = page_params["lastPage"]
 
         for page in range(first_page, last_page + 1, step):
-            current_url = modify_url(url, name_of_page_param, page)
+            url_of_current_page = modify_url(url, name_of_page_param, page)
             result_of_parsing_page = get_page_from_url(
-                current_url, elements_container, searched_element, get_elements_container, get_searched_element_in_container
+                url_of_current_page, elements_container, searched_element, get_elements_container, get_searched_element_in_container
             )
-            if len(result_of_parsing_page["columns"]) > 0:
-                result["columns"].extend(result_of_parsing_page["columns"])
-            if len(result_of_parsing_page["errors"]) > 0:
-                result["errors"].extend(result_of_parsing_page["errors"])
+            if result_of_parsing_page["status"] == "success":
+                result["columns"].extend(result_of_parsing_page["result_array"])
+            elif result_of_parsing_page["status"] == "error":
+                result["errors"].extend(result_of_parsing_page["result_array"])
     else:
         result_of_parsing_page = get_page_from_url(
             url, elements_container, searched_element, get_elements_container, get_searched_element_in_container
