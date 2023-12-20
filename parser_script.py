@@ -45,10 +45,10 @@ def handle_request(requestedData: RequestedData):
         result_data = scrape_game_data(form["url"], form["pageParams"], form["elementsContainer"], form["searchedElement"])
         if result_data["status"] == "success":
             df = pd.DataFrame(result_data["columns"])
-            csv_data = df.to_csv(index=False)        
+            csv_data = df.to_csv(index=False, encoding="utf-8")        
             headers = {
                 "Content-Disposition": 'attachment; filename=table.csv',
-                "Content-Type": "text/csv",
+                "Content-Type": "text/csv; charset=utf-8",
             }
             return Response(content=csv_data, media_type="text/csv", headers=headers)
         elif result_data["status"] == "error":
@@ -73,9 +73,19 @@ search_type_mapping = {
 
 # Словарь типов информации
 info_type_mapping = {
-    "InnerText": lambda element, attr: element.get_text(strip=True),
+    "InnerText": lambda element, attr: ' '.join(recursive_get_text(child) for child in element.children if isinstance(child, NavigableString) or child.get_text(strip=True)),
     "FromAttribute": lambda element, attr: element.get(attr, ""),
 }
+
+# Рекурсивная функция для получения текста из всех дочерних элементов
+def recursive_get_text(element):
+    text = ''
+    for child in element.children:
+        if isinstance(child, NavigableString):
+            text += str(child).strip() + ' '
+        elif child.name:
+            text += recursive_get_text(child)
+    return text.strip()
 
 # Изменение параметра в url
 def modify_url(original_url, parameter_name, parameter_new_value):
